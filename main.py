@@ -1,7 +1,8 @@
 import sys
 from PyQt6.QtWidgets import QApplication, QVBoxLayout, QLabel, QWidget, QGridLayout, \
-    QLineEdit, QPushButton, QMainWindow
+    QLineEdit, QPushButton, QMainWindow, QTableWidget
 from PyQt6.QtGui import QAction
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -17,8 +18,16 @@ class MainWindow(QMainWindow):
         about_action = QAction('About', self)
         help_menu_item.addAction(about_action)
 
+        self.table = QTableWidget()
+        self.table.setColumnCount(4)
+        self.table.setHorizontalHeaderLabels(('Id', 'Name', 'Course', 'Mobile'))
+        self.setCentralWidget(self.table)
+
+    def load_data(self):
+        pass
+
+
 app = QApplication(sys.argv)
 student = MainWindow()
 student.show()
 sys.exit(app.exec())
-
