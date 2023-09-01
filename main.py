@@ -91,6 +91,7 @@ class MainWindow(QMainWindow):
         dialog = DeleteDialog()
         dialog.exec()
 
+
 class InsertDialog(QDialog):
     def __init__(self):
         super().__init__()
@@ -185,6 +186,59 @@ class SearchDialog(QDialog):
 class EditDialog(QDialog):
     def __init__(self):
         super().__init__()
+        self.setWindowTitle('Edit Student Record')
+        self.setFixedWidth(300)
+        self.setFixedHeight(300)
+
+        layout = QVBoxLayout()
+
+        # Index of the clicked row
+        index = student.table.currentRow()
+
+        self.id = student.table.item(index, 0).text()
+
+        name = student.table.item(index, 1).text()
+        self.student_name = QLineEdit(name)
+        layout.addWidget(self.student_name)
+
+        course_name = student.table.item(index, 2).text()
+        self.course_name = QComboBox()
+        courses = ['Biology', 'Math', 'Chemistry', 'Physics']
+        self.course_name.addItems(courses)
+        self.course_name.setCurrentText(course_name)
+        layout.addWidget(self.course_name)
+
+        phone_number = student.table.item(index, 3).text()
+        self.student_phone = QLineEdit(phone_number)
+        layout.addWidget(self.student_phone)
+
+        submit_button = QPushButton('Submit')
+        submit_button.clicked.connect(self.edit)
+        layout.addWidget(submit_button)
+
+        self.setLayout(layout)
+
+    def edit(self):
+        connection = sqlite3.connect('database.db')
+        cursor = connection.cursor()
+
+        cursor.execute('UPDATE students SET name = ?, course = ? , mobile = ?'
+                       ' WHERE id = ?'
+                       , (self.student_name.text(),
+                          self.course_name.currentText(),
+                          self.student_phone.text(), self.id))
+        connection.commit()
+        cursor.close()
+        connection.close()
+        student.load_data()
+        success_message = QMessageBox()
+        success_message.setWindowTitle('Record updated')
+        success_message.setText(f"{self.student_name.text()} record successfully updated.")
+        timer = QTimer(self)
+        timer.timeout.connect(success_message.accept)
+        timer.start(1500)
+        success_message.exec()
+        QTimer.singleShot(1000, self.accept)
 
 
 class DeleteDialog(QDialog):
