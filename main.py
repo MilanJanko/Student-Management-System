@@ -1,7 +1,7 @@
 import sys
 from PyQt6.QtWidgets import QApplication, QVBoxLayout, QLabel, QWidget, QGridLayout, \
     QLineEdit, QPushButton, QMainWindow, QTableWidget, QTableWidgetItem, \
-    QDialog, QComboBox, QMessageBox, QToolBar
+    QDialog, QComboBox, QMessageBox, QToolBar, QStatusBar
 from PyQt6.QtGui import QAction, QIcon
 import sqlite3
 from PyQt6.QtCore import Qt, QTimer
@@ -28,16 +28,26 @@ class MainWindow(QMainWindow):
         search_action.triggered.connect(self.search)
         edit_menu_item.addAction(search_action)
 
+        # Create student table
         self.table = QTableWidget()
         self.table.setColumnCount(4)
         self.table.setHorizontalHeaderLabels(('Id', 'Name', 'Course', 'Mobile'))
         self.table.verticalHeader().setVisible(False)
         self.setCentralWidget(self.table)
 
+        # Create toolbar
         toolbar = QToolBar()
         toolbar.setMovable(True)
         self.addToolBar(toolbar)
         toolbar.addActions((add_student_action, search_action))
+
+        # Create status bar
+        self.status_bar = QStatusBar()
+        self.setStatusBar(self.status_bar)
+
+        # Detect click on the cell
+        self.table.cellClicked.connect(self.cell_clicked)
+
 
     def load_data(self):
         connection = sqlite3.connect('database.db')
@@ -58,6 +68,28 @@ class MainWindow(QMainWindow):
         self.dialog = SearchDialog()
         self.dialog.exec()
 
+    def cell_clicked(self):
+        edit_button = QPushButton('Edit Record')
+        edit_button.clicked.connect(self.edit)
+
+        delete_button = QPushButton('Delete Record')
+        delete_button.clicked.connect(self.delete)
+
+        children = self.findChildren(QPushButton)
+        if children:
+            for child in children:
+                self.status_bar.removeWidget(child)
+
+        self.status_bar.addWidget(edit_button)
+        self.status_bar.addWidget(delete_button)
+
+    def edit(self):
+        dialog = EditDialog()
+        dialog.exec()
+
+    def delete(self):
+        dialog = DeleteDialog()
+        dialog.exec()
 
 class InsertDialog(QDialog):
     def __init__(self):
@@ -148,6 +180,16 @@ class SearchDialog(QDialog):
         timer.start(1500)
         success_message.exec()
         QTimer.singleShot(1000, self.accept)
+
+
+class EditDialog(QDialog):
+    def __init__(self):
+        super().__init__()
+
+
+class DeleteDialog(QDialog):
+    def __init__(self):
+        super().__init__()
 
 
 app = QApplication(sys.argv)
