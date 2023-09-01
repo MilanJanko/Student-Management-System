@@ -1,8 +1,8 @@
 import sys
 from PyQt6.QtWidgets import QApplication, QVBoxLayout, QLabel, QWidget, QGridLayout, \
     QLineEdit, QPushButton, QMainWindow, QTableWidget, QTableWidgetItem, \
-    QDialog, QComboBox, QMessageBox
-from PyQt6.QtGui import QAction
+    QDialog, QComboBox, QMessageBox, QToolBar
+from PyQt6.QtGui import QAction, QIcon
 import sqlite3
 from PyQt6.QtCore import Qt, QTimer
 
@@ -11,19 +11,20 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('Student Management System')
+        self.setMinimumSize(450, 600)
 
         file_menu_item = self.menuBar().addMenu('&File')
         help_menu_item = self.menuBar().addMenu('&Help')
         edit_menu_item = self.menuBar().addMenu('&Edit')
 
-        add_student_action = QAction('Add Student', self)
+        add_student_action = QAction(QIcon('icons/add.png'), 'Add Student', self)
         add_student_action.triggered.connect(self.insert)
         file_menu_item.addAction(add_student_action)
 
         about_action = QAction('About', self)
         help_menu_item.addAction(about_action)
 
-        search_action = QAction('Search', self)
+        search_action = QAction(QIcon('icons/search.png'),'Search', self)
         search_action.triggered.connect(self.search)
         edit_menu_item.addAction(search_action)
 
@@ -32,6 +33,11 @@ class MainWindow(QMainWindow):
         self.table.setHorizontalHeaderLabels(('Id', 'Name', 'Course', 'Mobile'))
         self.table.verticalHeader().setVisible(False)
         self.setCentralWidget(self.table)
+
+        toolbar = QToolBar()
+        toolbar.setMovable(True)
+        self.addToolBar(toolbar)
+        toolbar.addActions((add_student_action, search_action))
 
     def load_data(self):
         connection = sqlite3.connect('database.db')
@@ -93,11 +99,15 @@ class InsertDialog(QDialog):
         cursor.close()
         connection.close()
         student.load_data()
-        success_message = QMessageBox()
-        success_message.setWindowTitle('Success')
-        success_message.setText('You successfully added new student!')
-        success_message.exec()
-        QTimer.singleShot(1000, self.accept)
+        confirmation = QMessageBox.question(self, "Confirmation", "Do you want add another student?",
+                                                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        if confirmation == QMessageBox.StandardButton.Yes:
+            # Clear the input fields
+            self.student_name.clear()
+            self.student_phone.clear()
+
+        elif confirmation == QMessageBox.StandardButton.No:
+            self.accept()
 
 
 class SearchDialog(QDialog):
