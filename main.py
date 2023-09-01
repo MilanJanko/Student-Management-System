@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import QApplication, QVBoxLayout, QLabel, QWidget, QGridLay
 from PyQt6.QtGui import QAction, QIcon
 import sqlite3
 from PyQt6.QtCore import Qt, QTimer
+from PyQt6 import QtCore
 
 
 class MainWindow(QMainWindow):
@@ -224,7 +225,7 @@ class EditDialog(QDialog):
 
         cursor.execute('UPDATE students SET name = ?, course = ? , mobile = ?'
                        ' WHERE id = ?'
-                       , (self.student_name.text(),
+                       ,(self.student_name.text(),
                           self.course_name.currentText(),
                           self.student_phone.text(), self.id))
         connection.commit()
@@ -244,6 +245,45 @@ class EditDialog(QDialog):
 class DeleteDialog(QDialog):
     def __init__(self):
         super().__init__()
+        self.setWindowTitle('Delete Record')
+
+        layout = QGridLayout()
+
+        index = student.table.currentRow()
+        self.id = student.table.item(index, 0).text()
+
+        confirmation = QLabel('Are you sure?')
+        yes = QPushButton('Yes')
+        no = QPushButton('No')
+
+        layout.addWidget(confirmation, 0, 0, 1, 2)
+        layout.setAlignment(confirmation, QtCore.Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(yes, 1, 0)
+        layout.addWidget(no, 1, 1)
+        self.setLayout(layout)
+
+        yes.clicked.connect(self.delete)
+        no.clicked.connect(self.close_dialog)
+
+    def delete(self):
+        index = student.table.currentRow()
+        self.id = student.table.item(index, 0).text()
+        connection = sqlite3.connect('database.db')
+        cursor = connection.cursor()
+        cursor.execute('DELETE FROM students WHERE id = ?', (self.id, ))
+        connection.commit()
+        cursor.close()
+        connection.close()
+        student.load_data()
+
+        self.close()
+        confirmation_widget = QMessageBox()
+        confirmation_widget.setWindowTitle('Success')
+        confirmation_widget.setText('Record deleted successfully.')
+        confirmation_widget.exec()
+
+    def close_dialog(self):
+        self.close()
 
 
 app = QApplication(sys.argv)
